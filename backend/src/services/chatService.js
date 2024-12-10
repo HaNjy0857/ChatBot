@@ -10,7 +10,7 @@ exports.saveMessage = async (room, text, user) => {
     await message.save();
     return message;
   } catch (error) {
-    console.error("保存消息时出错:", error);
+    console.error("保存訊息時出錯:", error);
     throw error;
   }
 };
@@ -23,7 +23,7 @@ exports.getRecentMessages = async (room, limit = 50) => {
       .exec();
     return messages.reverse();
   } catch (error) {
-    console.error("获取最近消息时出错:", error);
+    console.error("獲取最近消息時出錯:", error);
     throw error;
   }
 };
@@ -32,7 +32,7 @@ exports.deleteMessage = async (messageId) => {
   try {
     await Message.findByIdAndDelete(messageId);
   } catch (error) {
-    console.error("删除消息时出错:", error);
+    console.error("刪除訊息時出錯:", error);
     throw error;
   }
 };
@@ -46,7 +46,7 @@ exports.updateMessage = async (messageId, newText) => {
     );
     return updatedMessage;
   } catch (error) {
-    console.error("更新消息时出错:", error);
+    console.error("更新訊息時出錯:", error);
     throw error;
   }
 };

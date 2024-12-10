@@ -1,43 +1,80 @@
-const User = require("../models/User");
+const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const { User } = require("../models");
 const jwtConfig = require("../config/jwtConfig");
-const { hashPassword, comparePassword } = require("../utils/hashPassword");
+const { Op } = require("sequelize");
 const logger = require("../utils/logger");
 
-exports.register = async (username, password, role = "user") => {
+exports.register = async (username, email, password) => {
   try {
-    const hashedPassword = await hashPassword(password);
-    await User.create({ username, password: hashedPassword, role });
-    logger.info(`新用户注册: ${username}`);
+    const existingUser = await User.findOne({
+      where: {
+        [Op.or]: [{ username }, { email }],
+      },
+    });
+
+    if (existingUser) {
+      const reason = existingUser.username === username ? "用戶名" : "電子郵件";
+      logger.warn(`註冊失敗：${reason}已被使用`, { username, email });
+      return { success: false, message: `此${reason}已被使用` };
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    const newUser = await User.create({
+      username,
+      email,
+      password: hashedPassword,
+    });
+
+    logger.info("新用戶註冊成功", { username, email });
+    return { success: true, message: "用戶註冊成功" };
   } catch (error) {
-    logger.error(`用户注册失败: ${error.message}`);
+    logger.error("註冊過程中發生錯誤", { error: error.message });
     throw error;
   }
 };
 
-exports.login = async (username, password) => {
+exports.login = async (email, password) => {
   try {
-    const user = await User.findOne({ where: { username } });
+    const user = await User.findOne({ where: { email } });
 
-    if (!user || !(await comparePassword(password, user.password))) {
-      throw new Error("用户名或密码错误");
+    if (!user) {
+      logger.warn("登入失敗：用戶不存在", { email });
+      return { success: false, message: "信箱或密碼不正確" };
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+
+    if (!isPasswordValid) {
+      logger.warn("登入失敗：密碼不正確", { email });
+      return { success: false, message: "信箱或密碼不正確" };
     }
 
     const token = jwt.sign(
-      { username: user.username, role: user.role },
+      { id: user.id, username: user.username },
       jwtConfig.secret,
-      {
-        expiresIn: jwtConfig.expiresIn,
-        algorithm: jwtConfig.algorithm,
-        issuer: jwtConfig.issuer,
-        audience: jwtConfig.audience,
-      }
+      { expiresIn: jwtConfig.expiresIn }
     );
 
-    logger.info(`用户登录成功: ${username}`);
-    return { token, role: user.role };
+    logger.info("登入成功", {
+      email: user.email,
+      userId: user.id,
+      username: user.username,
+    });
+    return {
+      success: true,
+      message: "登入成功",
+      token,
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+      },
+    };
   } catch (error) {
-    logger.error(`用户登录失败: ${error.message}`);
+    logger.error("登入過程中發生錯誤", { error: error.message });
     throw error;
   }
 };

@@ -1,22 +1,40 @@
 const authService = require("../services/authService");
-const { handleError } = require("../middleware/errorHandler");
+const logger = require("../utils/logger");
 
 exports.register = async (req, res) => {
-  const { username, password, role } = req.body;
   try {
-    await authService.register(username, password, role);
-    res.status(201).json({ message: "注册成功" });
+    const { username, email, password } = req.body;
+
+    logger.info("開始註冊流程", { username, email });
+
+    const result = await authService.register(username, email, password);
+
+    if (!result.success) {
+      return res.status(409).json(result);
+    }
+
+    res.status(201).json(result);
   } catch (error) {
-    handleError(res, error);
+    logger.error("註冊錯誤:", error);
+    res.status(500).json({ success: false, message: "服務器錯誤，請稍後再試" });
   }
 };
 
 exports.login = async (req, res) => {
-  const { username, password } = req.body;
   try {
-    const { token, role } = await authService.login(username, password);
-    res.json({ token, role });
+    const { email, password } = req.body;
+
+    logger.info("開始登入流程", { email });
+
+    const result = await authService.login(email, password);
+
+    if (!result.success) {
+      return res.status(401).json(result);
+    }
+
+    res.status(200).json(result);
   } catch (error) {
-    handleError(res, error);
+    logger.error("登入過程中發生錯誤", { error: error.message });
+    res.status(500).json({ success: false, message: "服務器錯誤，請稍後再試" });
   }
 };
