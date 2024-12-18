@@ -45,10 +45,11 @@ const Lobby = () => {
 
     newSocket.on("connect", () => {
       console.log("Connected to lobby server");
+      newSocket.emit("getRooms");
     });
 
     newSocket.on("roomList", (roomList) => {
-      console.log("Received room list:", roomList);
+      console.log("收到房間列表:", roomList);
       setRooms(roomList);
     });
 
@@ -61,8 +62,6 @@ const Lobby = () => {
       newSocket.emit("getRooms");
     });
 
-    newSocket.emit("getRooms");
-
     setSocket(newSocket);
 
     return () => {
@@ -72,12 +71,24 @@ const Lobby = () => {
 
   const createRoom = () => {
     if (newRoomName && socket) {
-      console.log("Attempting to create room:", newRoomName);
-      socket.emit("createRoom", {
+      const userData = user || JSON.parse(localStorage.getItem("user"));
+      // 添加數據驗證
+      console.log("userData:", userData); // 檢查用戶數據
+      if (!userData) {
+        console.error("無法獲取用戶數據");
+        return;
+      }
+
+      // 打印要發送的數據
+      const roomData = {
         roomName: newRoomName,
-        creator:
-          user?.username || localStorage.getItem("username") || "Anonymous",
-      });
+        creator: userData.id,
+        members: [userData.id],
+        type: "public",
+      };
+      console.log("發送創建房間數據:", roomData);
+
+      socket.emit("createRoom", roomData);
       setNewRoomName("");
     }
   };

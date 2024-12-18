@@ -2,20 +2,14 @@ const mongoose = require("mongoose");
 
 const MessageSchema = new mongoose.Schema({
   room: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "ChatRoom",
-    required: true,
-  },
-  text: {
     type: String,
     required: true,
   },
   user: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
+    type: String,
     required: true,
   },
-  messageType: {
+  content: {
     type: String,
     enum: ["text", "image", "file"],
     default: "text",

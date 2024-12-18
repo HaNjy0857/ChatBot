@@ -3,7 +3,7 @@ const logger = require("../utils/logger");
 
 exports.createRoom = async (roomData) => {
   try {
-    const existingRoom = await ChatRoom.findOne({ name: roomData.name });
+    const existingRoom = await ChatRoom.findOne({ name: roomData.roomName });
 
     if (existingRoom) {
       return {
@@ -13,11 +13,10 @@ exports.createRoom = async (roomData) => {
     }
 
     const newRoom = new ChatRoom({
-      name: roomData.name,
-      description: roomData.description,
-      creator: roomData.creator,
+      name: roomData.roomName,
+      creator: String(roomData.creator),
+      members: [String(roomData.creator)], // 創建者自動加入成員列表
       type: roomData.type || "public",
-      members: [roomData.creator], // 創建者自動加入成員列表
     });
 
     await newRoom.save();
@@ -35,13 +34,21 @@ exports.createRoom = async (roomData) => {
 
 exports.getRooms = async () => {
   try {
-    const rooms = await ChatRoom.find({ type: "public" })
-      .populate("creator", "username")
-      .select("name description members createdAt lastActivity");
+    const rooms = await ChatRoom.find({ type: "public" }).select(
+      "name members createdAt lastActivity"
+    );
+
+    // 格式化返回數據
+    const formattedRooms = rooms.map((room) => ({
+      name: room.name,
+      userCount: room.members.length,
+      createdAt: room.createdAt,
+      lastActivity: room.lastActivity,
+    }));
 
     return {
       success: true,
-      data: rooms,
+      data: formattedRooms,
     };
   } catch (error) {
     logger.error("獲取聊天室列表服務錯誤:", error);

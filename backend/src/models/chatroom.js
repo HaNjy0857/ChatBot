@@ -11,16 +11,13 @@ const ChatRoomSchema = new mongoose.Schema({
     default: "",
   },
   creator: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
+    type: String,
     required: true,
   },
-  members: [
-    {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-    },
-  ],
+  members: {
+    type: [Number],
+    default: [],
+  },
   type: {
     type: String,
     enum: ["public", "private"],

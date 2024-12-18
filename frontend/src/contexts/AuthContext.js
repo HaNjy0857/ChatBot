@@ -2,6 +2,7 @@ import React, { createContext, useState, useEffect } from "react";
 
 export const AuthContext = createContext({
   isAuthenticated: false,
+  user: null,
   login: () => {},
   logout: () => {},
   error: null,
@@ -11,11 +12,13 @@ export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [user, setUser] = useState(null);
 
-  const login = (token, username) => {
+  const login = (token, userData) => {
     try {
       localStorage.setItem("authToken", token);
-      localStorage.setItem("username", username);
+      localStorage.setItem("user", JSON.stringify(userData));
+      setUser(userData);
       setIsAuthenticated(true);
       setError(null);
     } catch (err) {
@@ -27,6 +30,8 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     try {
       localStorage.removeItem("authToken");
+      localStorage.removeItem("user");
+      setUser(null);
       setIsAuthenticated(false);
       setError(null);
     } catch (err) {
@@ -38,7 +43,11 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     try {
       const token = localStorage.getItem("authToken");
-      setIsAuthenticated(!!token);
+      const savedUser = localStorage.getItem("user");
+      if (token && savedUser) {
+        setUser(JSON.parse(savedUser));
+        setIsAuthenticated(true);
+      }
     } catch (err) {
       console.error("身份驗證檢查錯誤:", err);
       setError("無法檢查身份驗證狀態");
@@ -49,6 +58,7 @@ export const AuthProvider = ({ children }) => {
 
   const value = {
     isAuthenticated,
+    user,
     login,
     logout,
     error,

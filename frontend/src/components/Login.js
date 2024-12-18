@@ -33,25 +33,15 @@ const Login = () => {
         { email, password },
         { withCredentials: true }
       );
-      console.log("完整的response.data:", response.data);
 
-      const {
-        token,
-        user: { username },
-      } = response.data;
+      const { token, user } = response.data;
 
-      if (!username) {
-        console.error("警告: username未定義");
+      if (!user) {
+        console.error("警告: 用戶數據未定義");
         return;
       }
 
-      login(token);
-      localStorage.setItem("isLoggedIn", "true");
-      localStorage.setItem("token", token);
-      localStorage.setItem("username", username);
-
-      console.log("存儲後的username:", localStorage.getItem("username"));
-
+      login(token, user);
       navigate("/lobby");
     } catch (error) {
       console.error("登入錯誤:", error);
