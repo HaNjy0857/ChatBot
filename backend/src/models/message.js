@@ -14,6 +14,10 @@ const MessageSchema = new mongoose.Schema({
     enum: ["text", "image", "file"],
     default: "text",
   },
+  text: {
+    type: String,
+    required: true,
+  },
   createdAt: {
     type: Date,
     default: Date.now,
